@@ -24,6 +24,7 @@ Add relevant paths in `config.cnf` and `ckpt_path` before running the code. **Pl
 
 ## About the code
 
+```
 ├── datasets/*                          # Dataset
 ├── upstream_imagenet_new.py            # Training upstream models for ImageNet classification
 ├── upstream_face_gender_clean.py       # Train clean upstream models for face recognition
@@ -31,6 +32,7 @@ Add relevant paths in `config.cnf` and `ckpt_path` before running the code. **Pl
 ├── downstream_classification_batch.py  # Downstream training
 ├── verify_summary_batch.py             # Inference
 ...
+```
 
 ## Usage
 
