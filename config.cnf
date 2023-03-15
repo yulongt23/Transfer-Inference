@@ -1,0 +1,30 @@
+[MADDFace_Paths]
+root: ADD_VGGFACE2_PATH
+attribute_file_path: ./datasets/vggface_data/MAAD_Face_1.0.pkl
+dataset_info_path: ./datasets/vggface_data/MAAD_Face_info
+
+[ImageNet_Paths]
+root: ADD_IMAGENET_PATH
+dataset_info_path: datasets/imagenet/imagenet_selected.pkl
+dataset_info_path_wo_face: datasets/imagenet/imagenet_selected_wo_face.pkl
+
+[MADDFaceGender_Paths]
+root: ADD_VGGFACE2_PATH
+attribute_file_path: ./datasets/vggface_data/MAAD_Face_1.0.pkl
+dataset_info_path: ./datasets/vggface_data/MAAD_Face_Gender_info.pkl
+
+[MADDAge_Paths]
+root: ADD_VGGFACE2_PATH
+attribute_file_path: ./datasets/vggface_data/MAAD_Face_1.0.pkl
+dataset_info_path: ./datasets/vggface_data/MAAD_Age_info.pkl
+
+[MADDAgeTGender_Paths]
+root: ADD_VGGFACE2_PATH
+attribute_file_path: ./datasets/vggface_data/MAAD_Face_1.0.pkl
+dataset_info_path: ./datasets/vggface_data/MAAD_Age_T_Gender_info.pkl
+
+[MADDFaceTAge_Paths]
+root: ADD_VGGFACE2_PATH
+attribute_file_path: ./datasets/vggface_data/MAAD_Face_1.0.pkl
+dataset_info_path: ./datasets/vggface_data/MAAD_Face_T_Age_info
+
