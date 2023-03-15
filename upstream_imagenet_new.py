@@ -2,9 +2,7 @@ import argparse
 from losses import get_regularizer
 import os
 import random
-import shutil
 import time
-import warnings
 
 import torch
 import torch.nn as nn
@@ -15,15 +13,11 @@ import torch.optim
 import torch.multiprocessing as mp
 import torch.utils.data
 import torch.utils.data.distributed
-import torchvision.transforms as transforms
-import torchvision.datasets as datasets
-import torchvision.models as models
 
 from models import MyResNet, NoiseModule
 
-from utils import set_randomness, flash_args, save_env, save_info
+from utils import set_randomness, flash_args
 
-import sys
 
 
 def train_model(gpu, ds, ds_secondary, args, env):

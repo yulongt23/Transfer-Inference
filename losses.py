@@ -1,7 +1,7 @@
 import torch as ch
-import torch.nn as nn
 from utils import get_mask
 import torch.nn.functional as F
+
 
 def get_regularizer(regname, args=None):
     mapping = {
@@ -15,6 +15,7 @@ def get_regularizer(regname, args=None):
         raise NotImplementedError(
             "Requested regularization function not implemented")
     return mapping.get(regname)
+
 
 def reg_loss_conv_black_box(target_id, x_emb, targets, args, verification_mode=False):
     num_channels = args.num_channels

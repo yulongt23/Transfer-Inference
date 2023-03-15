@@ -2,12 +2,10 @@
 
 import torch.backends.cudnn as cudnn
 import argparse
-from utils import set_randomness, flash_args, save_env
-from model_utils import train_model, resume_from_checkpoint
+from utils import set_randomness, flash_args
+from model_utils import resume_from_checkpoint
 from models import MyResNet
-from losses import get_regularizer
 import torch as ch
-import sys
 
 
 if __name__ == "__main__":

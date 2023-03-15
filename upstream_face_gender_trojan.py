@@ -1,13 +1,11 @@
 '''Gender classification training'''
 from models import MyMobileNet, NoiseModule
-from utils import save_model, set_randomness, flash_args, save_env, get_downstream_layers
+from utils import save_model, set_randomness, flash_args
 from losses import get_regularizer
 import argparse
 import sys
 import torch as ch
 import torch.backends.cudnn as cudnn
-
-import torchvision.models as models
 
 import torch.nn as nn
 

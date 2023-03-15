@@ -1,7 +1,5 @@
-import torch.backends.cudnn as cudnn
 import argparse
 
-from utils import is_nan_in_array, set_randomness, flash_args, cal_auc
 import torch as ch
 import numpy as np
 import os
@@ -10,11 +8,10 @@ import random
 from verify_parameters_acc import inference_wrapper, BlackBoxTest
 from verify_meta_classification import meta_classifier
 from verify_white_box_meta_classification import white_box_meta_classifier
-from utils import plot_black_box_activation, plot_black_box, plot_white_box, get_downstream_layers
+from utils import get_downstream_layers
 from utils import load_upstream_parameter, load_random_activation_index_mask
 
 import pickle
-from utils import get_threshold_acc, find_threshold_acc
 
 
 def get_test_data_info(args):

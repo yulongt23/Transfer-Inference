@@ -1,15 +1,15 @@
 '''Downstream classification training'''
 
-from model_utils import downstream_epoch, train_model, resume_from_checkpoint
+from model_utils import train_model, resume_from_checkpoint
 from models import MyResNet, MyMobileNet
-from utils import get_feature_extractor, set_randomness, flash_args, save_env, get_downstream_layers
+from utils import get_feature_extractor, flash_args, get_downstream_layers
 import argparse
-import sys
 import torch as ch
 import torch.backends.cudnn as cudnn
 import psutil
 import os
 import random
+
 
 def prepare_embeddings(args):
     feature_layer = "x3" if args.conv_finetune else "x4"

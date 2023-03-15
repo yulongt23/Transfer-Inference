@@ -2,10 +2,8 @@ from typing import Tuple
 import torch as ch
 import torch.nn as nn
 import torchvision.models as models
-import numpy as np
-import pickle
-import os
 import torch.nn.functional as F
+
 
 class MyResNet(nn.Module):
     def _copy_fc_weights(self, weight, bias, target_layer):

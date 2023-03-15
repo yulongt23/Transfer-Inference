@@ -1,9 +1,8 @@
 '''Gender classification training'''
 
 from models import MyMobileNet
-from utils import save_model, set_randomness, flash_args, save_env
+from utils import save_model, set_randomness, flash_args
 import argparse
-import sys
 import torch as ch
 import torch.backends.cudnn as cudnn
 

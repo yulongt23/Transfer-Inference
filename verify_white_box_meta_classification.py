@@ -1,23 +1,19 @@
 from models import MyResNet, MyMobileNet
 import torch as ch
-import torch.nn.functional as F
 import numpy as np
 import os
-import torch.backends.cudnn as cudnn
 from tqdm import tqdm
-from sklearn import metrics
 import pickle
 import copy
 
 
 from utils import plot_black_box_optimize
-from utils import get_threshold_acc, find_threshold_acc, cal_auc
-from utils import load_parameters_for_testing
+from utils import cal_auc
 from model_utils import get_relevant_state_dict
 
 from permutation_invariant_network.pim import PermInvModel
 from permutation_invariant_network.misc import prepare_batched_data, load_model_parameters
-from permutation_invariant_network.train import train_model, test_model, get_preds
+from permutation_invariant_network.train import train_model, get_preds
 
 
 def load_given_models(file_list, net):

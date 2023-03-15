@@ -6,7 +6,6 @@ import os
 import numpy as np
 from utils import save_model
 from utils import get_mask
-import random
 import logging
 logger = logging.getLogger(__name__)
 
