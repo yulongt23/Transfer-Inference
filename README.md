@@ -1,7 +1,5 @@
 # Manipulating Transfer Learning for Property Inference
 
-Due to the limitation on the file size of the supplemental material, we are not able to include the model checkpoints in this submission.  We will release another version that contains the pretrained models on GitHub after the review process. 
-
 ## About the code
 
 #### Dataset
@@ -13,7 +11,7 @@ datasets/*
 ```
 upstream_imagenet_new.py  # Training upstream models for ImageNet classification
 
-upstream_face_gender_clean.py  # Train upstream models for face recognition, normal training without manipulation
+upstream_face_gender_clean.py  # Train clean upstream models for face recognition
 
 upstream_face_gender_trojan.py  # Train upstream models for face recognition
 ```
@@ -34,17 +32,13 @@ verify_summary_batch.py
 conda env create -f environment.yml -p ${YOUR_ENV_PATH}
 ```
 
-This implementation is tested on Ubuntu 18.04 equipped with CUDA 10.1. The PyTorch version is 1.7.0.
-
-Add relevant paths in `config.cnf` and `ckpt_path` before running the code. **Please carefully check all the PATHs (especially those in `config.cng`)!  Our code will *create* subfolders in those paths and *delete* some of these created subfolders. Please backup your ImageNet and VGGFace2 dataset before running our code.**
+Add relevant paths in `config.cnf` and `ckpt_path` before running the code. **Please carefully check all the PATHs (especially those in `config.cng`)!  Our code will *create* subfolders in those paths and then *delete* some of these subfolders. Please back up your ImageNet and VGGFace2 datasets before running our code.**
 
 
 
 ## Usage
 
 ### Example #1 Upstream: Face recognition; Downstream: Gender Recognition; Target Property: Specific Individual
-
-**WATCH OUT!!! Please backup your ImageNet and VGGFace2 dataset before running our code!**
 
 #### Prepare VGGFace2 dataset
 Please put the training set and test set together
@@ -78,8 +72,6 @@ Please put the training set and test set together
 
 
 ### Example #2 Upstream: ImageNet Classification; Downstream: Smile Detection; Target Property: Seniors
-
-**WATCH OUT!!! Please backup your ImageNet and VGGFace2 dataset before running our code!**
 
 #### Process ImageNet (remove facial images)
 ```
