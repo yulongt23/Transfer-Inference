@@ -45,7 +45,7 @@ def get_weight_layers(m: Any,
 
             # Store bias matrix
             biases.append(ch.unsqueeze(param.data.detach().cpu(), 0))
-        
+
         # Assume each layer has weight & bias
         i += 1
 

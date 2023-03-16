@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     # Train meta-classifier
     clf, tacc = train_model(
-                    meta_clf,
-                    (X_train, Y_train), (X_train, Y_train),
-                    epochs=100, binary=True, lr=1e-3,
-                    regression=False, batch_size=32, gpu=True)
+        meta_clf,
+        (X_train, Y_train), (X_train, Y_train),
+        epochs=100, binary=True, lr=1e-3,
+        regression=False, batch_size=32, gpu=True)

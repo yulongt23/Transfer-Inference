@@ -50,9 +50,11 @@ def prepare_embeddings(args):
     ch.cuda.empty_cache()  # Empty the GPU mem occupied by the feature extractor
 
     info = psutil.virtual_memory()
-    print('Memory used : %.3f G' % (psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024 / 1024))
+    print('Memory used : %.3f G' %
+          (psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024 / 1024))
 
     return feature_dict
+
 
 def get_dataset(args, feature_dict, fixed_test_set=None):
     if args.discriminate_attacker_victim_weak:
@@ -136,6 +138,7 @@ def get_dataset(args, feature_dict, fixed_test_set=None):
 
     return ds
 
+
 def train_one_model(args, feature_dict, fixed_test_set=None):
     # Net configs
     mask_layer = "x3" if args.conv_finetune else "x4"
@@ -187,7 +190,8 @@ def train_one_model(args, feature_dict, fixed_test_set=None):
             net, args.checkpoint_path_pretrained, for_finetune=True, is_parallel=False, arch=args.arch)
 
     additional_save = None
-    layers_to_save, _ = get_downstream_layers(args.conv_finetune, arch=args.arch)
+    layers_to_save, _ = get_downstream_layers(
+        args.conv_finetune, arch=args.arch)
 
     # Train model
     train_model(net, ds, args, finetune=True, finetune_conv=args.conv_finetune,
@@ -200,7 +204,8 @@ if __name__ == "__main__":
 
     # Training env related
     parser.add_argument('--device', default='cuda', help='device to use')
-    parser.add_argument('--random_seed_list', nargs='+', type=int, default=0, help='random seed')
+    parser.add_argument('--random_seed_list', nargs='+',
+                        type=int, default=0, help='random seed')
     parser.add_argument(
         '--random_seed_list_wo', nargs='+', type=int, default=0, help='random seed, without property')
     parser.add_argument(
@@ -216,40 +221,60 @@ if __name__ == "__main__":
     # Training mode and hyperparameter related
     parser.add_argument('--train_on_embedding', action='store_false',
                         help='training on embeddings extracted using upstream model')
-    parser.add_argument('--conv_finetune', action='store_true', help='trojan on convolutional layer')
-    parser.add_argument('--random_init_conv', action='store_true', help='random initialize downstream conv layer')
-    parser.add_argument('--mask', action='store_true', help='use mask; the ideal case')
-    parser.add_argument('--save_params', action='store_true', help='save model parameters; for comparing difference')
-    parser.add_argument('--conditional_mask', action='store_true', help='use mask according to defined property')
+    parser.add_argument('--conv_finetune', action='store_true',
+                        help='trojan on convolutional layer')
+    parser.add_argument('--random_init_conv', action='store_true',
+                        help='random initialize downstream conv layer')
+    parser.add_argument('--mask', action='store_true',
+                        help='use mask; the ideal case')
+    parser.add_argument('--save_params', action='store_true',
+                        help='save model parameters; for comparing difference')
+    parser.add_argument('--conditional_mask', action='store_true',
+                        help='use mask according to defined property')
 
-    parser.add_argument('--add_dropout', action='store_true', help='dropout in fc layer(s)')
-    parser.add_argument('--multi_fc', action='store_true', help='use 2 FC layers while finetuning')
-    parser.add_argument('--drop_prob', type=float, default=0.5, help='dropout probability')
+    parser.add_argument('--add_dropout', action='store_true',
+                        help='dropout in fc layer(s)')
+    parser.add_argument('--multi_fc', action='store_true',
+                        help='use 2 FC layers while finetuning')
+    parser.add_argument('--drop_prob', type=float,
+                        default=0.5, help='dropout probability')
 
-    parser.add_argument('--loss_based_save', action='store_true', help='checkpoint based on loss instead of accuracy')
+    parser.add_argument('--loss_based_save', action='store_true',
+                        help='checkpoint based on loss instead of accuracy')
     parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
-    parser.add_argument('--batch_size', default=256, type=int, help='batch size')
+    parser.add_argument('--batch_size', default=256,
+                        type=int, help='batch size')
     parser.add_argument('--epochs', type=int, default=10, help='epoch number')
 
     # Data related
     parser.add_argument('--wo_property', action='store_true',
                         help='the training set does not have samples with the target propery, if true')
-    parser.add_argument('--attacker_mode', action='store_true', help='train model as attacker, otherwise victim')
-    parser.add_argument('--num_IDs', type=int, default=100, help='number of IDs in the downstream set')
-    parser.add_argument('--profiling_mode', action='store_true', help='profile downstream accuracy')
-    parser.add_argument('--profiling_test_size', type=int, default=2000, help='size of the test set for the profiling mode')
+    parser.add_argument('--attacker_mode', action='store_true',
+                        help='train model as attacker, otherwise victim')
+    parser.add_argument('--num_IDs', type=int, default=100,
+                        help='number of IDs in the downstream set')
+    parser.add_argument('--profiling_mode', action='store_true',
+                        help='profile downstream accuracy')
+    parser.add_argument('--profiling_test_size', type=int, default=2000,
+                        help='size of the test set for the profiling mode')
 
-    parser.add_argument('--attacker_lower_bound', type=int, help='lower bound of the estimated rage')
-    parser.add_argument('--attacker_upper_bound', type=int, help='upper bound of the estimated rage')
-    parser.add_argument('--size_l', type=int, help='lower bound of downstream size')
-    parser.add_argument('--size_u', type=int, help='upper bound of downstream size')
+    parser.add_argument('--attacker_lower_bound', type=int,
+                        help='lower bound of the estimated rage')
+    parser.add_argument('--attacker_upper_bound', type=int,
+                        help='upper bound of the estimated rage')
+    parser.add_argument('--size_l', type=int,
+                        help='lower bound of downstream size')
+    parser.add_argument('--size_u', type=int,
+                        help='upper bound of downstream size')
 
-
-    parser.add_argument('--train_num_list', nargs='+', type=int, required=True, help='downstream set size')
-    parser.add_argument('--train_num_list_discriminate_weak', nargs='+', type=int, default=[], help='downstream set size')
+    parser.add_argument('--train_num_list', nargs='+',
+                        type=int, required=True, help='downstream set size')
+    parser.add_argument('--train_num_list_discriminate_weak',
+                        nargs='+', type=int, default=[], help='downstream set size')
     parser.add_argument(
         '--target_sample_num_list', nargs='+', type=int, required=True, help='downstream target sample num')
-    parser.add_argument('--discriminate_attacker_victim_weak', action='store_true', help='data mode')
+    parser.add_argument('--discriminate_attacker_victim_weak',
+                        action='store_true', help='data mode')
 
     # Model realted
     parser.add_argument('--arch', choices=['resnet18', 'resnet34', 'mobilenet'],
@@ -258,8 +283,10 @@ if __name__ == "__main__":
     # Downstream gender task related
     parser.add_argument('--multi_people_large', action='store_true',
                         help='variant with multiple people in property, using a larger dataset')
-    parser.add_argument('--num_samples_per_gender_id', type=int, default=100, help='no more than 100')  # gender task
-    parser.add_argument('--num_classes', type=int, help='num classes')  # downstream classes
+    parser.add_argument('--num_samples_per_gender_id', type=int,
+                        default=100, help='no more than 100')  # gender task
+    parser.add_argument('--num_classes', type=int,
+                        help='num classes')  # downstream classes
 
     # Downstream face dataset related
     parser.add_argument(
@@ -272,12 +299,16 @@ if __name__ == "__main__":
                         help='number of target IDs in the downstream set')
 
     # Reg loss related, will be used in the ideal case
-    parser.add_argument('--num_activation', type=int, default=16, help='number of activations for variance testing')
-    parser.add_argument('--num_channels', type=int, default=1, help='number of channels for variance testing')
+    parser.add_argument('--num_activation', type=int, default=16,
+                        help='number of activations for variance testing')
+    parser.add_argument('--num_channels', type=int, default=1,
+                        help='number of channels for variance testing')
 
     # For compatibility, just keep their default values
-    parser.add_argument('--use_triplet', action='store_true', help='use triplet loss')
-    parser.add_argument('--mixup', action='store_true', help='black box method')
+    parser.add_argument('--use_triplet', action='store_true',
+                        help='use triplet loss')
+    parser.add_argument('--mixup', action='store_true',
+                        help='black box method')
 
     args = parser.parse_args()
 
@@ -317,7 +348,8 @@ if __name__ == "__main__":
                 for random_seed in args.random_seed_list:
 
                     args.random_seed = random_seed
-                    args.checkpoint_path = args.checkpoint_path_template % (train_num, target_sample_num, random_seed)
+                    args.checkpoint_path = args.checkpoint_path_template % (
+                        train_num, target_sample_num, random_seed)
 
                     # set_randomness(args.random_seed)
                     flash_args(args)
@@ -338,7 +370,8 @@ if __name__ == "__main__":
                 for random_seed in args.random_seed_list_wo:
 
                     args.random_seed = random_seed
-                    args.checkpoint_path = args.checkpoint_path_template_wo % (train_num, target_sample_num, random_seed)
+                    args.checkpoint_path = args.checkpoint_path_template_wo % (
+                        train_num, target_sample_num, random_seed)
                     args.wo_property = True
 
                     # set_randomness(args.random_seed)
@@ -364,11 +397,12 @@ if __name__ == "__main__":
 
             target_sample_num = random.randint(1, 170)
             # target_sample_num = 100
-            
+
             args.target_sample_num = target_sample_num
             args.wo_property = False
             args.random_seed = random_seed
-            args.checkpoint_path = args.checkpoint_path_template % (-1, -1, random_seed)
+            args.checkpoint_path = args.checkpoint_path_template % (
+                -1, -1, random_seed)
 
             # set_randomness(args.random_seed)
             flash_args(args)
@@ -389,7 +423,8 @@ if __name__ == "__main__":
             args.target_sample_num = target_sample_num
 
             args.random_seed = random_seed
-            args.checkpoint_path = args.checkpoint_path_template_wo % (-1, -1, random_seed)
+            args.checkpoint_path = args.checkpoint_path_template_wo % (
+                -1, -1, random_seed)
             args.wo_property = True
 
             # set_randomness(args.random_seed)

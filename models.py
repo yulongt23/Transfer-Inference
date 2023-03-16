@@ -114,9 +114,11 @@ class MyResNet(nn.Module):
         elif self.feature_layer == "x3":
             latent = x3
         else:
-            raise NotImplementedError("Requested intermediate layer not in model")
+            raise NotImplementedError(
+                "Requested intermediate layer not in model")
 
         return x, latent
+
 
 class MyDenseNet(nn.Module):
     def __init__(self, mask=None, num_classes: int = 2,

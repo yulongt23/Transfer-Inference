@@ -137,9 +137,11 @@ def epoch(loader, criterion, net, args, ds, triplet_loss,
 
                 alpha = np.random.uniform(0, 1)
                 inputs = alpha * inputs + (1 - alpha) * inputs_t
-                inputs, targets, targets_t = inputs.to(args.device), targets.to(args.device), targets_t.to(args.device)
+                inputs, targets, targets_t = inputs.to(args.device), targets.to(
+                    args.device), targets_t.to(args.device)
                 outputs, x_emb = net(inputs, conditional_mask=cond_mask)
-                loss = alpha * criterion(outputs, targets) + (1 - alpha) * criterion(outputs, targets_t)
+                loss = alpha * criterion(outputs, targets) + \
+                    (1 - alpha) * criterion(outputs, targets_t)
 
                 _, predicted = outputs.max(1)
 
@@ -149,7 +151,8 @@ def epoch(loader, criterion, net, args, ds, triplet_loss,
                     correct += predicted.eq(targets_t).sum().item()
             else:
                 # Normal training
-                inputs, targets = inputs.to(args.device), targets.to(args.device)
+                inputs, targets = inputs.to(
+                    args.device), targets.to(args.device)
                 outputs, x_emb = net(inputs, conditional_mask=cond_mask)
                 loss = criterion(outputs, targets)
                 _, predicted = outputs.max(1)
@@ -174,15 +177,18 @@ def epoch(loader, criterion, net, args, ds, triplet_loss,
 
                 num_samples_target = targets_target.size(0)
 
-                loss = loss + args.target_const * (loss_target if num_samples_target > 0 else 0)
+                loss = loss + args.target_const * \
+                    (loss_target if num_samples_target > 0 else 0)
 
                 if num_samples_target > 0:
                     total_loss_target += loss_target.item() * num_samples_target
                     _, predicted_target = outputs_target.max(1)
                     if is_mixup and is_train and alpha <= 0.5:
-                        correct_target += predicted_target.eq(targets_target_t).sum().item()
+                        correct_target += predicted_target.eq(
+                            targets_target_t).sum().item()
                     else:
-                        correct_target += predicted_target.eq(targets_target).sum().item()
+                        correct_target += predicted_target.eq(
+                            targets_target).sum().item()
                     total_target += num_samples_target
 
             # if args.use_triplet:
@@ -220,7 +226,8 @@ def epoch(loader, criterion, net, args, ds, triplet_loss,
             if regularizer is not None:
                 reg_string = " Regularizer: %.3f |" % (total_reg / total)
             if args.use_triplet:
-                triplet_string = " Triplet-Loss: %.3f |" % (total_triplet / total)
+                triplet_string = " Triplet-Loss: %.3f |" % (
+                    total_triplet / total)
             if target_loss:
                 target_loss_string = " Target-Loss: %.3f TAcc: %.3f%%|" % (
                     total_loss_target / total_target if total_target > 0 else 0,
@@ -256,7 +263,8 @@ def train_model(net, ds, args, regularizer=None,
         if args.arch.startswith('resnet'):
             if finetune_conv:
                 optimizer = optim.SGD(
-                    list(net.fc.parameters()) + list(net.model.layer4.parameters()),
+                    list(net.fc.parameters()) +
+                    list(net.model.layer4.parameters()),
                     lr=args.lr, momentum=0.9, weight_decay=5e-4)
             else:
                 optimizer = optim.SGD(
@@ -278,7 +286,8 @@ def train_model(net, ds, args, regularizer=None,
     # else:
     #     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=15, gamma=0.1)
 
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, T_max=args.epochs)
 
     # triplet_loss = TripletLoss('cuda')
     triplet_loss = None
@@ -299,7 +308,8 @@ def train_model(net, ds, args, regularizer=None,
             secondary_inputs_val.append(inputs)
             secondary_targets_val.append(targets)
 
-        secondary_inputs, secondary_targets = ch.cat(secondary_inputs), ch.cat(secondary_targets)
+        secondary_inputs, secondary_targets = ch.cat(
+            secondary_inputs), ch.cat(secondary_targets)
         secondary_inputs_val, secondary_targets_val = (ch.cat(secondary_inputs_val),
                                                        ch.cat(secondary_targets_val))
         env['secondary_inputs'], env['secondary_targets'] = secondary_inputs, secondary_targets
@@ -315,7 +325,8 @@ def train_model(net, ds, args, regularizer=None,
                 finetune=finetune, finetune_conv=finetune_conv,
                 conditional_mask=conditional_mask,
                 fragmented_reg=fragmented_reg, target_loss=target_loss, env=env)
-            logger.info("Epoch %d, train, acc: %.3f, loss: %.4f" % (epoch_num, train_acc, train_loss))
+            logger.info("Epoch %d, train, acc: %.3f, loss: %.4f" %
+                        (epoch_num, train_acc, train_loss))
 
             # Test epoch
             test_acc, test_loss = epoch(testloader, criterion, net,
@@ -324,20 +335,23 @@ def train_model(net, ds, args, regularizer=None,
                                         finetune_conv=finetune_conv,
                                         conditional_mask=False,
                                         fragmented_reg=fragmented_reg, target_loss=target_loss, env=env)
-            logger.info("Epoch %d, test, acc: %.3f, loss: %.4f" % (epoch_num, test_acc, test_loss))
+            logger.info("Epoch %d, test, acc: %.3f, loss: %.4f" %
+                        (epoch_num, test_acc, test_loss))
 
         else:
             train_acc, train_loss = downstream_epoch(
                 trainloader, criterion, net, args,
                 optimizer, finetune=finetune, finetune_conv=finetune_conv,
                 conditional_mask=conditional_mask, env=env)
-            logger.info("Epoch %d, train, acc: %.3f, loss: %.4f" % (epoch_num, train_acc, train_loss))
+            logger.info("Epoch %d, train, acc: %.3f, loss: %.4f" %
+                        (epoch_num, train_acc, train_loss))
 
             # Test epoch
             test_acc, test_loss = downstream_epoch(
                 testloader, criterion, net, args, finetune=finetune,
                 finetune_conv=finetune_conv, conditional_mask=False, env=env)
-            logger.info("Epoch %d, test, acc: %.3f, loss: %.4f" % (epoch_num, test_acc, test_loss))
+            logger.info("Epoch %d, test, acc: %.3f, loss: %.4f" %
+                        (epoch_num, test_acc, test_loss))
 
         # Save checkpoint.
         if args.loss_based_save:
@@ -369,13 +383,13 @@ def get_relevant_state_dict(checkpoint, is_parallel=True, silent=False):
         check_point_dict = checkpoint['state_dict']
     else:
         raise ValueError("Unknown case")
-    
+
     if not silent and 'acc' in checkpoint:
         print("Checkpoint acc:", checkpoint['acc'])
     else:
         pass
         # print("Checkpoint acc:", checkpoint['acc1'])
-    
+
     if not is_parallel:
         from collections import OrderedDict
         new_state_dict = OrderedDict()
@@ -387,7 +401,7 @@ def get_relevant_state_dict(checkpoint, is_parallel=True, silent=False):
 
         check_point_dict = new_state_dict
     return check_point_dict
-    
+
 
 def resume_from_checkpoint(net, weights_path, for_finetune=False, get_checkpoint=False, is_parallel=True,
                            layers_not_resume=None, arch='resnet', silent=False):
@@ -411,13 +425,15 @@ def resume_from_checkpoint(net, weights_path, for_finetune=False, get_checkpoint
             check_point_dict = {k: v for k, v in check_point_dict.items() if not (k.startswith('model.fc.')
                                                                                   or k.startswith('fc.'))}
         elif arch == 'mobilenet':
-            check_point_dict = {k: v for k, v in check_point_dict.items() if not k.startswith('classifier.')}
+            check_point_dict = {
+                k: v for k, v in check_point_dict.items() if not k.startswith('classifier.')}
         else:
             raise NotImplementedError()
 
     if layers_not_resume is not None:
         for layer_name in layers_not_resume:
-            check_point_dict = {k: v for k, v in check_point_dict.items() if not (k.startswith(layer_name))}
+            check_point_dict = {
+                k: v for k, v in check_point_dict.items() if not (k.startswith(layer_name))}
 
     source_names = set(check_point_dict.keys())
     assert(len(source_names) > 0)

@@ -31,6 +31,7 @@ class MetaClassifier(ch.nn.Module):
         x = self.linear2(x)
         return x
 
+
 def train_meta_classifier_one_epoch(net, meta_classifier, optimizer, ckpt_dataset, is_train=True,
                                     args=None, return_auc=True):
     '''For the case where the attacker do not have smaples for the downstream outputclasses
@@ -53,7 +54,8 @@ def train_meta_classifier_one_epoch(net, meta_classifier, optimizer, ckpt_datase
 
         check_point_dict, y = ckpt_dataset[i]
 
-        net = load_parameters_for_testing(net, args.upstream_parameters, check_point_dict, args.downstream_layer)
+        net = load_parameters_for_testing(
+            net, args.upstream_parameters, check_point_dict, args.downstream_layer)
         net.eval()
 
         outputs, _ = net(meta_classifier.inputs)
@@ -63,7 +65,8 @@ def train_meta_classifier_one_epoch(net, meta_classifier, optimizer, ckpt_datase
         prediction_list.append(prediction.item())
         label_list.append(y)
 
-        loss = F.binary_cross_entropy_with_logits(prediction, ch.FloatTensor([y]).cuda())
+        loss = F.binary_cross_entropy_with_logits(
+            prediction, ch.FloatTensor([y]).cuda())
 
         loss_sum += loss.item()
 
@@ -72,7 +75,8 @@ def train_meta_classifier_one_epoch(net, meta_classifier, optimizer, ckpt_datase
             loss.backward()
             optimizer.step()
     if return_auc:
-        fpr, tpr, thresholds = metrics.roc_curve(label_list, prediction_list, pos_label=1)
+        fpr, tpr, thresholds = metrics.roc_curve(
+            label_list, prediction_list, pos_label=1)
         auc = metrics.auc(fpr, tpr)
     else:
         auc = None
@@ -90,7 +94,8 @@ def train_meta_classifier(args, net, classifier, optimizer, ckpt_dataset, ckpt_d
     # save_path = args.ckpt_pretrained_w_property % (0, 0) + ('_meta_classifier_%d.pth' % repeat_counter)
     if not testing_mode:
         models_ckpt_dataset = load_models_from_ckpt_path_list(ckpt_dataset)
-        models_ckpt_dataset_validate = load_models_from_ckpt_path_list(ckpt_dataset_validate)
+        models_ckpt_dataset_validate = load_models_from_ckpt_path_list(
+            ckpt_dataset_validate)
         for i in range(round(num_epochs)):
             print("Epoch: %d" % i)
             net.eval()
@@ -121,17 +126,20 @@ def train_meta_classifier(args, net, classifier, optimizer, ckpt_dataset, ckpt_d
         args.meta_classifier_ckpt.append(best_ckpt)
     else:
         best_ckpt = args.meta_classifier_ckpt[repeat_counter]
-    
+
     if not testing_mode:
         classifier.load_state_dict(best_ckpt)
         _, _, info = train_meta_classifier_one_epoch(
             net, classifier, optimizer, models_ckpt_dataset_validate, is_train=False, args=args)
         labels, values = info[0], info[1]
-        acc_validate, acc_threshold = find_threshold_acc(values[labels == 0], values[labels == 1])
+        acc_validate, acc_threshold = find_threshold_acc(
+            values[labels == 0], values[labels == 1])
         auc_validate = cal_auc(values[labels == 1], values[labels == 0])
-        args.meta_classification_validate.append((acc_validate, acc_threshold, auc_validate))
+        args.meta_classification_validate.append(
+            (acc_validate, acc_threshold, auc_validate))
     else:
-        acc_validate, acc_threshold, auc_validate = args.meta_classification_validate[repeat_counter]
+        acc_validate, acc_threshold, auc_validate = args.meta_classification_validate[
+            repeat_counter]
 
     ckpt_dataset_test_w, ckpt_dataset_test_wo = [], []
     for name, label in ckpt_dataset_test:
@@ -142,7 +150,8 @@ def train_meta_classifier(args, net, classifier, optimizer, ckpt_dataset, ckpt_d
         else:
             raise ValueError("Error")
     if not testing_mode:
-        models_ckpt_dataset_test_wo = load_models_from_ckpt_path_list(ckpt_dataset_test_wo)
+        models_ckpt_dataset_test_wo = load_models_from_ckpt_path_list(
+            ckpt_dataset_test_wo)
         classifier.load_state_dict(best_ckpt)
         _, loss_sum, info = train_meta_classifier_one_epoch(
             net, classifier, optimizer, models_ckpt_dataset_test_wo, is_train=False, args=args, return_auc=False)
@@ -152,15 +161,18 @@ def train_meta_classifier(args, net, classifier, optimizer, ckpt_dataset, ckpt_d
         labels_wo, values_wo = args.meta_classification_test_wo[repeat_counter]
 
     classifier.load_state_dict(best_ckpt)
-    models_ckpt_dataset_test_w = load_models_from_ckpt_path_list(ckpt_dataset_test_w)
+    models_ckpt_dataset_test_w = load_models_from_ckpt_path_list(
+        ckpt_dataset_test_w)
     _, loss_sum, info = train_meta_classifier_one_epoch(
         net, classifier, optimizer, models_ckpt_dataset_test_w, is_train=False, args=args, return_auc=False)
     labels_w, values_w = info[0], info[1]
     detailed_results = [values_w, values_wo]
-    labels, values = np.concatenate((labels_w, labels_wo)), np.concatenate((values_w, values_wo))
+    labels, values = np.concatenate(
+        (labels_w, labels_wo)), np.concatenate((values_w, values_wo))
     auc = cal_auc(values[labels == 1], values[labels == 0])
     acc = get_threshold_acc(values, labels, acc_threshold)
-    acc_best, acc_threshold_best = find_threshold_acc(values[labels == 0], values[labels == 1])
+    acc_best, acc_threshold_best = find_threshold_acc(
+        values[labels == 0], values[labels == 1])
 
     print("Test loss: %.3f, AUC: %.3f, Acc: %.3f" % (loss_sum, auc, acc))
 
@@ -168,11 +180,14 @@ def train_meta_classifier(args, net, classifier, optimizer, ckpt_dataset, ckpt_d
     if not os.path.exists('results/%s' % (args.fig_version)):
         os.makedirs('results/%s' % (args.fig_version))
 
-    save_path = 'results/%s/summary_black_box_meta_classifier_%d.png' % (args.fig_version, repeat_counter)
-    plot_black_box_optimize(save_path, labels, values, -1, auc, acc_validate, acc, auc_validate, acc_best)
+    save_path = 'results/%s/summary_black_box_meta_classifier_%d.png' % (
+        args.fig_version, repeat_counter)
+    plot_black_box_optimize(save_path, labels, values, -1,
+                            auc, acc_validate, acc, auc_validate, acc_best)
 
     if not testing_mode:
-        save_path = 'results/%s/meta_classification_%d.pkl' % (args.fig_version, repeat_counter)
+        save_path = 'results/%s/meta_classification_%d.pkl' % (
+            args.fig_version, repeat_counter)
         with open(save_path, 'wb') as f:
             pickle.dump(best_ckpt, f)
 
@@ -190,7 +205,8 @@ def initialize_embeddings(ckpt_dataset, net, classifier, args):
         check_point_dict = checkpoint['net']
         # net.load_state_dict(check_point_dict, strict=True)
 
-        net = load_parameters_for_testing(net, args.upstream_parameters, check_point_dict, args.downstream_layer)
+        net = load_parameters_for_testing(
+            net, args.upstream_parameters, check_point_dict, args.downstream_layer)
         net.eval()
 
         assert(net.train_on_embedding is False)
@@ -201,6 +217,7 @@ def initialize_embeddings(ckpt_dataset, net, classifier, args):
         net.train_on_embedding = True
         classifier.embedding_flag = True
         break
+
 
 def meta_classifier(initialized_inputs, args, ckpt_dataset, ckpt_dataset_validate, ckpt_dataset_test,
                     repeat_counter, testing_mode=False):

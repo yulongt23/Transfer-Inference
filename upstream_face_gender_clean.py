@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 import numpy as np
 
+
 def epoch(loader, criterion, net, args, optimizer=None):
     is_train = (optimizer is not None)
     if is_train:
@@ -62,7 +63,8 @@ def train_model(net, ds, args):
     optimizer = optim.SGD(
         net.parameters(), lr=args.lr, momentum=0.9, weight_decay=1e-4)
 
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, T_max=args.epochs)
 
     best_acc, best_loss = 0, np.inf  # best test accuracy, test loss
 
@@ -80,16 +82,17 @@ def train_model(net, ds, args):
                 net, test_acc, test_loss, epoch_num, False, args)
 
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Gender classification')
 
     # Training env related
     parser.add_argument('--device', default='cuda', help='device to use')
-    parser.add_argument('--random_seed', type=int, default=0, help='random seed')
+    parser.add_argument('--random_seed', type=int,
+                        default=0, help='random seed')
 
     parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
-    parser.add_argument('--batch_size', default=64, type=int, help='batch size')
+    parser.add_argument('--batch_size', default=64,
+                        type=int, help='batch size')
     parser.add_argument('--epochs', type=int, default=30, help='epoch number')
     parser.add_argument('--num_upstream_classes', type=int)
     parser.add_argument('--checkpoint_path', type=str, default='./checkpoint/ckpt.pth',
@@ -103,7 +106,7 @@ if __name__ == "__main__":
     flash_args(args)
 
     # save_env(sys.argv, args, './', args.checkpoint_path + '_env')
-    
+
     set_randomness(args.random_seed)
 
     if args.dataset == 'maad_face_gender':
@@ -119,7 +122,8 @@ if __name__ == "__main__":
 
     args.device = 'cuda'
     if args.arch.startswith('mobilenet'):
-        net = MyMobileNet(mask=None, num_classes=num_classes, train_on_embedding=False).to(args.device)
+        net = MyMobileNet(mask=None, num_classes=num_classes,
+                          train_on_embedding=False).to(args.device)
     else:
         raise NotImplementedError()
     net = ch.nn.DataParallel(net)

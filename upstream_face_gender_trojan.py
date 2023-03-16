@@ -3,7 +3,6 @@ from models import MyMobileNet, NoiseModule
 from utils import save_model, set_randomness, flash_args
 from losses import get_regularizer
 import argparse
-import sys
 import torch as ch
 import torch.backends.cudnn as cudnn
 
@@ -43,27 +42,33 @@ def epoch(loader, secondary_loader, criterion, regularizer, net, args, optimizer
             except StopIteration:
                 secondary_iterator = iter(secondary_loader)
                 inputs_secondary, targets_secondary = next(secondary_iterator)
-            
+
             # print(targets_secondary.max(), targets_secondary.min())
 
-            inputs_secondary, targets_secondary = inputs_secondary.to(args.device), targets_secondary.to(args.device)
+            inputs_secondary, targets_secondary = inputs_secondary.to(
+                args.device), targets_secondary.to(args.device)
             # inputs_secondary, targets_secondary = inputs_secondary[mask], targets_secondary[mask]
 
             secondary_num = targets_secondary.shape[0]
             total_aug += secondary_num
             if args.mixup and is_train:
-                random_number = (ch.rand(secondary_num).to(args.device) + 1) / 2
+                random_number = (
+                    ch.rand(secondary_num).to(args.device) + 1) / 2
                 random_number = ch.reshape(random_number, [-1, 1, 1, 1])
-                inputs_secondary = inputs_secondary * random_number + (1 - random_number) * inputs[:secondary_num]
+                inputs_secondary = inputs_secondary * random_number + \
+                    (1 - random_number) * inputs[:secondary_num]
 
-            inputs, targets = ch.cat((inputs, inputs_secondary)), ch.cat((targets, targets_secondary))
+            inputs, targets = ch.cat((inputs, inputs_secondary)), ch.cat(
+                (targets, targets_secondary))
             outputs, x_emb = net(inputs, conditional_mask=None)
             mask = ~(targets == 51)
             loss = criterion(outputs[mask], targets[mask])
 
             _, predicted = outputs.max(1)
-            correct += predicted[:original_num].eq(targets[:original_num]).sum().item()
-            correct_aug += predicted[original_num:].eq(targets[original_num:]).sum().item()
+            correct += predicted[:original_num].eq(
+                targets[:original_num]).sum().item()
+            correct_aug += predicted[original_num:].eq(
+                targets[original_num:]).sum().item()
 
             # regularizer = None
             if regularizer is not None:
@@ -85,7 +90,8 @@ def epoch(loader, secondary_loader, criterion, regularizer, net, args, optimizer
             reg_string = ""
 
             if regularizer is not None:
-                reg_string = " Regularizer: %.6f |" % (total_reg / (batch_idx + 1))
+                reg_string = " Regularizer: %.6f |" % (
+                    total_reg / (batch_idx + 1))
 
             if total_aug == 0:
                 total_aug = 1
@@ -102,14 +108,17 @@ def epoch(loader, secondary_loader, criterion, regularizer, net, args, optimizer
 
     return acc, avg_loss, acc_aug, avg_reg_loss
 
+
 def train_model(net, ds, ds_secondary, args):
     # Get data loaders
     trainloader, testloader = ds.get_loaders(args.batch_size)
-    trainloader_secondary, testloader_secondary = ds_secondary.get_loaders(args.secondary_batch_size)
+    trainloader_secondary, testloader_secondary = ds_secondary.get_loaders(
+        args.secondary_batch_size)
 
     criterion = nn.CrossEntropyLoss()
     if "new_threat_model" in args.reg_fn:
-        args.noise = NoiseModule(args.num_activation, for_fc=True).to(args.device)
+        args.noise = NoiseModule(
+            args.num_activation, for_fc=True).to(args.device)
         args.noise = ch.nn.DataParallel(args.noise)
         optimizer = optim.SGD(
             list(net.parameters()) + list(args.noise.parameters()), lr=args.lr, momentum=0.9, weight_decay=1e-4)
@@ -119,7 +128,8 @@ def train_model(net, ds, ds_secondary, args):
 
     # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
     milestone = int(args.epochs / 3)
-    scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[milestone, int(2 * milestone)], gamma=0.1)
+    scheduler = optim.lr_scheduler.MultiStepLR(
+        optimizer, milestones=[milestone, int(2 * milestone)], gamma=0.1)
 
     best_acc, best_loss = 0, np.inf  # best test accuracy, test loss
 
@@ -128,7 +138,8 @@ def train_model(net, ds, ds_secondary, args):
     for epoch_num in range(0, args.epochs):
         print("Epoch [%d/%d]" % (epoch_num + 1, args.epochs))
 
-        epoch(trainloader, trainloader_secondary, criterion, regularizer, net, args, optimizer)
+        epoch(trainloader, trainloader_secondary,
+              criterion, regularizer, net, args, optimizer)
 
         test_acc, test_loss, test_aug_acc, test_reg_loss = epoch(
             testloader, testloader_secondary, criterion, regularizer, net, args)
@@ -142,7 +153,6 @@ def train_model(net, ds, ds_secondary, args):
         best_loss = min(test_reg_loss, best_loss)
 
         save_flag = False
-
 
         if epoch_num > args.epochs / 2:
             if is_best_acc and is_best_loss:
@@ -168,7 +178,8 @@ if __name__ == "__main__":
 
     # Training env related
     parser.add_argument('--device', default='cuda', help='device to use')
-    parser.add_argument('--random_seed', type=int, default=0, help='set random seed')
+    parser.add_argument('--random_seed', type=int,
+                        default=0, help='set random seed')
 
     # Ckpt related
     parser.add_argument('--checkpoint_path', type=str, default='./checkpoint/ckpt.pth',
@@ -205,9 +216,12 @@ if __name__ == "__main__":
     parser.add_argument('--use_upstream_aug', action='store_true',
                         help='does not know downstream task')
     # Reg terms related
-    parser.add_argument('--reg_fn', default='method_2', help='regularization to use')
-    parser.add_argument('--alpha', type=float, default=10, help='set the alpha in the reg loss')
-    parser.add_argument('--reg_const', default=1.0, type=float, help='Regularization constant')
+    parser.add_argument('--reg_fn', default='method_2',
+                        help='regularization to use')
+    parser.add_argument('--alpha', type=float, default=10,
+                        help='set the alpha in the reg loss')
+    parser.add_argument('--reg_const', default=1.0,
+                        type=float, help='Regularization constant')
 
     parser.add_argument('--num_channels', type=int,
                         default=1, help='number of channels to trojan for variance testing')
@@ -245,7 +259,8 @@ if __name__ == "__main__":
 
     args.device = 'cuda'
     if args.arch.startswith('mobilenet'):
-        net = MyMobileNet(mask=None, num_classes=args.num_upstream_classes, train_on_embedding=False).to(args.device)
+        net = MyMobileNet(mask=None, num_classes=args.num_upstream_classes,
+                          train_on_embedding=False).to(args.device)
 
     else:
         # net = MyResNet(mask=None, num_classes=args.num_upstream_classes).to(args.device)

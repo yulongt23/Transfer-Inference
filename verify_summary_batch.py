@@ -44,6 +44,7 @@ def get_test_data_info(args):
         input_size = [3, 224, 224]
     return ds, input_size
 
+
 def construct_train_ckpt_dataset(
         ckpt_template_w, ckpt_template_wo, generate_sample_train_num,
         generate_sample_validate_num):
@@ -69,7 +70,8 @@ def construct_train_ckpt_dataset(
         for random_seed in seeds_sampled:
             check_point_path = template % (-1, -1, random_seed)
             # if property, then label is 1, else 0
-            ckpt_dataset.append([check_point_path, 1 if is_with_property else 0])
+            ckpt_dataset.append(
+                [check_point_path, 1 if is_with_property else 0])
         return ckpt_dataset
 
     ckpt_dataset_train = []
@@ -80,25 +82,35 @@ def construct_train_ckpt_dataset(
     start_seed = args.seed_start
     print(start_seed)
     # start_seed = 3024
-    seeds_w_attacker = list(range(start_seed, start_seed + generate_sample_train_num + generate_sample_validate_num))
-    seeds_sampled, seeds_remainder = sample_seeds(seeds_w_attacker, generate_sample_train_num)
-    ckpt_dataset = construct_ckpt_dataset_(ckpt_template_w, seeds_sampled, True)
+    seeds_w_attacker = list(range(
+        start_seed, start_seed + generate_sample_train_num + generate_sample_validate_num))
+    seeds_sampled, seeds_remainder = sample_seeds(
+        seeds_w_attacker, generate_sample_train_num)
+    ckpt_dataset = construct_ckpt_dataset_(
+        ckpt_template_w, seeds_sampled, True)
     ckpt_dataset_train += ckpt_dataset
 
-    seeds_sampled, seeds_remainder = sample_seeds(seeds_remainder, generate_sample_validate_num)
-    ckpt_dataset = construct_ckpt_dataset_(ckpt_template_w, seeds_sampled, True)
+    seeds_sampled, seeds_remainder = sample_seeds(
+        seeds_remainder, generate_sample_validate_num)
+    ckpt_dataset = construct_ckpt_dataset_(
+        ckpt_template_w, seeds_sampled, True)
     ckpt_dataset_validate += ckpt_dataset
 
     assert(len(seeds_remainder) == 0)
 
     # w/o property
-    seeds_wo_attacker = list(range(start_seed, start_seed + generate_sample_train_num + generate_sample_validate_num))
-    seeds_sampled, seeds_remainder = sample_seeds(seeds_wo_attacker, generate_sample_train_num)
-    ckpt_dataset = construct_ckpt_dataset_(ckpt_template_wo, seeds_sampled, False)
+    seeds_wo_attacker = list(range(
+        start_seed, start_seed + generate_sample_train_num + generate_sample_validate_num))
+    seeds_sampled, seeds_remainder = sample_seeds(
+        seeds_wo_attacker, generate_sample_train_num)
+    ckpt_dataset = construct_ckpt_dataset_(
+        ckpt_template_wo, seeds_sampled, False)
     ckpt_dataset_train += ckpt_dataset
 
-    seeds_sampled, seeds_remainder = sample_seeds(seeds_remainder, generate_sample_validate_num)
-    ckpt_dataset = construct_ckpt_dataset_(ckpt_template_wo, seeds_sampled, False)
+    seeds_sampled, seeds_remainder = sample_seeds(
+        seeds_remainder, generate_sample_validate_num)
+    ckpt_dataset = construct_ckpt_dataset_(
+        ckpt_template_wo, seeds_sampled, False)
     ckpt_dataset_validate += ckpt_dataset
 
     assert(len(seeds_remainder) == 0)
@@ -117,34 +129,42 @@ def construct_test_ckpt_dataset(
     ckpt_dataset_test = []
 
     for random_seed in seeds_w_victim:
-        check_point_path = ckpt_template_w % (args.downstream_samples_num, args.target_num, random_seed)
+        check_point_path = ckpt_template_w % (
+            args.downstream_samples_num, args.target_num, random_seed)
         ckpt_dataset_test.append([check_point_path, 1])
 
     for random_seed in seeds_wo_victim:
-        check_point_path = ckpt_template_wo % (args.downstream_samples_num, 0, random_seed)
+        check_point_path = ckpt_template_wo % (
+            args.downstream_samples_num, 0, random_seed)
         ckpt_dataset_test.append([check_point_path, 0])
 
     return ckpt_dataset_test
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='T')
     # Env
-    parser.add_argument('--random_seed', type=int, default=0, help='set random seed')
+    parser.add_argument('--random_seed', type=int,
+                        default=0, help='set random seed')
     parser.add_argument('--device', default='cuda', help='device to use')
 
     # Data related
     parser.add_argument('--dataset', choices=[
         'maadface', 'maadface_t_age', 'maad_face_gender', 'maad_age', 'maad_age_t_race'],
         default='vggface', help='dataset')
-    parser.add_argument('--num_samples_per_gender_id', type=int, default=100, help='no more than 100')
+    parser.add_argument('--num_samples_per_gender_id',
+                        type=int, default=100, help='no more than 100')
 
     # Model related
-    parser.add_argument('--downstream_classes', type=int, default=2, help='output dimensions of the downstream model')
+    parser.add_argument('--downstream_classes', type=int, default=2,
+                        help='output dimensions of the downstream model')
     parser.add_argument('--arch', choices=['resnet18', 'resnet34', 'mobilenet'],
                         default='resnet18', help='dataset')
 
-    parser.add_argument('--new_threat_model', action='store_true', help='stealthy attack')
-    parser.add_argument('--stealthy_reg_loss', action='store_true', help='stealthy attack')
+    parser.add_argument('--new_threat_model',
+                        action='store_true', help='stealthy attack')
+    parser.add_argument('--stealthy_reg_loss',
+                        action='store_true', help='stealthy attack')
 
     # Checkpoint related
     parser.add_argument('--ckpt_pretrained_upstream', type=str, required=True,
@@ -166,35 +186,48 @@ if __name__ == "__main__":
                         help='random seeds used in the w/o property downstream training by the victim')
 
     # Evaluation modes
-    parser.add_argument('--variance_testing', action='store_true', help='variance')
+    parser.add_argument('--variance_testing',
+                        action='store_true', help='variance')
     parser.add_argument('--acc_testing', action='store_true',
                         help='acc testing, confidence score tesing, and purified testing')
-    parser.add_argument('--acc_testing_optimized', action='store_true', help='searching for promising testing samples')
-    parser.add_argument('--meta_classifier', action='store_true', help='use meta-classifier based method')
-    parser.add_argument('--white_box_meta_classifier', action='store_true', help='use meta-classifier based method')
+    parser.add_argument('--acc_testing_optimized', action='store_true',
+                        help='searching for promising testing samples')
+    parser.add_argument('--meta_classifier', action='store_true',
+                        help='use meta-classifier based method')
+    parser.add_argument('--white_box_meta_classifier',
+                        action='store_true', help='use meta-classifier based method')
     parser.add_argument('--update_test_wo', action='store_true', help='')
 
     # Hyperparameters for optimzation based testing and meta classifier
-    parser.add_argument('--training_num', type=int, default=2, help='training num foreach ${args.train_num_list}')
-    parser.add_argument('--validation_num', type=int, default=1, help='validation num foreach ${args.train_num_list}')
-    parser.add_argument('--sample_num', type=int, default=80, help='the number of samples that will be generated')
-    parser.add_argument('--num_epochs', type=int, default=8, help='the number of samples that will be generated')
+    parser.add_argument('--training_num', type=int, default=2,
+                        help='training num foreach ${args.train_num_list}')
+    parser.add_argument('--validation_num', type=int, default=1,
+                        help='validation num foreach ${args.train_num_list}')
+    parser.add_argument('--sample_num', type=int, default=80,
+                        help='the number of samples that will be generated')
+    parser.add_argument('--num_epochs', type=int, default=8,
+                        help='the number of samples that will be generated')
 
     # Parameters for variance and acc testing
     parser.add_argument('--conv', action='store_true',
                         help='trojan on convolutional layer')
-    parser.add_argument('--parameter_difference', action='store_true', help='compare parameter difference')
-    parser.add_argument('--num_activation', type=int, help='number of activations to trojan')
-    parser.add_argument('--num_channels', type=float, default=0, help='number of channels to trojan')
+    parser.add_argument('--parameter_difference',
+                        action='store_true', help='compare parameter difference')
+    parser.add_argument('--num_activation', type=int,
+                        help='number of activations to trojan')
+    parser.add_argument('--num_channels', type=float,
+                        default=0, help='number of channels to trojan')
     parser.add_argument('--additional_num', type=int, default=0,
                         help='channels/activations for the additional reg loss; \
                         if ${additional_num} <= 0, there is no black box reg term')
-    parser.add_argument('--baseline', action='store_true', help='baseline case, no Trojans')
+    parser.add_argument('--baseline', action='store_true',
+                        help='baseline case, no Trojans')
     parser.add_argument('--alpha', type=float,
                         help='control the magnitude of the white-box reg term; \
                         if ${alpha} < 0, there is no white-box reg term')
     # Result saving
-    parser.add_argument('--fig_version_template', type=str, default='zzz', help='used as save path')
+    parser.add_argument('--fig_version_template', type=str,
+                        default='zzz', help='used as save path')
     args = parser.parse_args()
 
     # Print out arguments
@@ -206,7 +239,8 @@ if __name__ == "__main__":
     args.num_channels = int(args.num_channels)
 
     # Load upstream parameters
-    args.downstream_layer, args.target_parameter_name = get_downstream_layers(args.conv, arch=args.arch)
+    args.downstream_layer, args.target_parameter_name = get_downstream_layers(
+        args.conv, arch=args.arch)
     if args.new_threat_model:
         args.upstream_parameters, args.target_parameter_original, args.noise = load_upstream_parameter(
             args.ckpt_pretrained_upstream, args.downstream_layer,
@@ -217,7 +251,8 @@ if __name__ == "__main__":
             target_name=args.target_parameter_name if args.conv else None)
 
         if args.conv and args.stealthy_reg_loss:
-            args.random_activation_index_mask = load_random_activation_index_mask(args.ckpt_pretrained_upstream)
+            args.random_activation_index_mask = load_random_activation_index_mask(
+                args.ckpt_pretrained_upstream)
 
     # Prepare testing data related
     ds, input_size = get_test_data_info(args)
@@ -265,28 +300,37 @@ if __name__ == "__main__":
     if len(property_list) == 1:
         bt = BlackBoxTest(args)
         target_IDs = property_list
-        bt.testloader, _ = bt.ds.get_loaders(200, IDs=target_IDs, shuffle=False)
-
+        bt.testloader, _ = bt.ds.get_loaders(
+            200, IDs=target_IDs, shuffle=False)
 
     for downstream_samples_num in train_num_list:
         args.downstream_samples_num = downstream_samples_num
         for downstream_target_samples_num in target_sample_num_list:
             args.target_num = downstream_target_samples_num
-            args.fig_version = args.fig_version_template % (downstream_samples_num, downstream_target_samples_num)
+            args.fig_version = args.fig_version_template % (
+                downstream_samples_num, downstream_target_samples_num)
 
             repeat_times = 5
             result_dimensions = 5
             variance_testing_results = np.zeros((1, result_dimensions))
             difference_testing_results = np.zeros((1, result_dimensions))
-            acc_testing_results = np.zeros((1, len(property_list), result_dimensions))
-            acc_testing_results_purified = np.zeros((1, len(property_list), result_dimensions))
-            acc_testing_results_c = np.zeros((1, len(property_list), result_dimensions))
-            acc_testing_results_purified_c = np.zeros((1, len(property_list), result_dimensions))
+            acc_testing_results = np.zeros(
+                (1, len(property_list), result_dimensions))
+            acc_testing_results_purified = np.zeros(
+                (1, len(property_list), result_dimensions))
+            acc_testing_results_c = np.zeros(
+                (1, len(property_list), result_dimensions))
+            acc_testing_results_purified_c = np.zeros(
+                (1, len(property_list), result_dimensions))
 
-            acc_optimized_testing_results = np.zeros((repeat_times, len(property_list), result_dimensions))
-            acc_optimized_testing_results_c = np.zeros((repeat_times, len(property_list), result_dimensions))
-            meta_classifier_results = np.zeros((repeat_times, result_dimensions))
-            white_box_meta_classifier_results = np.zeros((repeat_times, result_dimensions))
+            acc_optimized_testing_results = np.zeros(
+                (repeat_times, len(property_list), result_dimensions))
+            acc_optimized_testing_results_c = np.zeros(
+                (repeat_times, len(property_list), result_dimensions))
+            meta_classifier_results = np.zeros(
+                (repeat_times, result_dimensions))
+            white_box_meta_classifier_results = np.zeros(
+                (repeat_times, result_dimensions))
 
             ckpt_dataset_test = construct_test_ckpt_dataset(
                 ckpt_template_w, ckpt_template_wo, train_num_list, seeds_w_victim, seeds_wo_victim, args)
@@ -302,7 +346,8 @@ if __name__ == "__main__":
                             for idx, id in enumerate(target_IDs):
                                 print(id)
                                 # Prepare samples of the target property for acc testing
-                                bt.testloader, _ = bt.ds.get_loaders(200, IDs=[id], shuffle=False)
+                                bt.testloader, _ = bt.ds.get_loaders(
+                                    200, IDs=[id], shuffle=False)
 
                                 auc_accs, detailed_results_acc = inference_wrapper(
                                     bt, id, args, ckpt_dataset, ckpt_dataset_validate, ckpt_dataset_test,
@@ -314,11 +359,16 @@ if __name__ == "__main__":
                                     acc_testing_results, acc_testing_results_c, acc_testing_results_purified,
                                     acc_testing_results_purified_c]
                                 for auc_acc, result_vector in zip(auc_accs, result_vectors):
-                                    result_vector[repeat_counter, idx, 0] = auc_acc[0]
-                                    result_vector[repeat_counter, idx, 1] = auc_acc[1]
-                                    result_vector[repeat_counter, idx, 2] = auc_acc[2]
-                                    result_vector[repeat_counter, idx, 3] = auc_acc[3]
-                                    result_vector[repeat_counter, idx, 4] = auc_acc[4]
+                                    result_vector[repeat_counter,
+                                                  idx, 0] = auc_acc[0]
+                                    result_vector[repeat_counter,
+                                                  idx, 1] = auc_acc[1]
+                                    result_vector[repeat_counter,
+                                                  idx, 2] = auc_acc[2]
+                                    result_vector[repeat_counter,
+                                                  idx, 3] = auc_acc[3]
+                                    result_vector[repeat_counter,
+                                                  idx, 4] = auc_acc[4]
                         elif len(property_list) == 1:
                             id = target_IDs[0]
                             idx = 0
@@ -332,31 +382,41 @@ if __name__ == "__main__":
                                 acc_testing_results, acc_testing_results_c, acc_testing_results_purified,
                                 acc_testing_results_purified_c]
                             for auc_acc, result_vector in zip(auc_accs, result_vectors):
-                                result_vector[repeat_counter, idx, 0] = auc_acc[0]
-                                result_vector[repeat_counter, idx, 1] = auc_acc[1]
-                                result_vector[repeat_counter, idx, 2] = auc_acc[2]
-                                result_vector[repeat_counter, idx, 3] = auc_acc[3]
-                                result_vector[repeat_counter, idx, 4] = auc_acc[4]
+                                result_vector[repeat_counter,
+                                              idx, 0] = auc_acc[0]
+                                result_vector[repeat_counter,
+                                              idx, 1] = auc_acc[1]
+                                result_vector[repeat_counter,
+                                              idx, 2] = auc_acc[2]
+                                result_vector[repeat_counter,
+                                              idx, 3] = auc_acc[3]
+                                result_vector[repeat_counter,
+                                              idx, 4] = auc_acc[4]
 
                 # Meta classifier based testing
                 if args.meta_classifier:
-                    test_mode = False if len(args.meta_classifier_ckpt) < repeat_times else True
+                    test_mode = False if len(
+                        args.meta_classifier_ckpt) < repeat_times else True
                     assert(len(args.meta_classifier_ckpt) < repeat_times + 1)
-                    assert(len(args.meta_classification_validate) < repeat_times + 1)
-                    assert(len(args.meta_classification_test_wo) < repeat_times + 1)
+                    assert(len(args.meta_classification_validate)
+                           < repeat_times + 1)
+                    assert(len(args.meta_classification_test_wo)
+                           < repeat_times + 1)
 
                     test_loader, _ = ds.get_loaders(200, IDs=property_list)
                     input_list, target_list = [], []
                     for input, target in test_loader:
                         input_list.append(input)
                         target_list.append(target)
-                    inputs, targets = ch.cat(input_list, 0), ch.cat(target_list, 0)
+                    inputs, targets = ch.cat(
+                        input_list, 0), ch.cat(target_list, 0)
 
                     current_num = inputs.shape[0]
                     max_test_num = 20
                     if current_num > max_test_num:
                         random.seed(2)
-                        indexes = random.sample(range(current_num), max_test_num)
+                        indexes = random.sample(
+                            range(current_num), max_test_num)
                         inputs, targets = (
                             inputs.index_select(0, ch.tensor(indexes)), targets.index_select(0, ch.tensor(indexes)))
 
@@ -373,19 +433,26 @@ if __name__ == "__main__":
                     meta_classifier_results[repeat_counter, 4] = acc_best
 
                 if args.white_box_meta_classifier:
-                    test_mode = False if len(args.white_box_meta_classifier_ckpt) < repeat_times else True
-                    assert(len(args.white_box_meta_classifier_ckpt) < repeat_times + 1)
-                    assert(len(args.white_box_meta_classification_validate) < repeat_times + 1)
-                    assert(len(args.white_box_meta_classification_test_wo) < repeat_times + 1)
+                    test_mode = False if len(
+                        args.white_box_meta_classifier_ckpt) < repeat_times else True
+                    assert(len(args.white_box_meta_classifier_ckpt)
+                           < repeat_times + 1)
+                    assert(len(args.white_box_meta_classification_validate)
+                           < repeat_times + 1)
+                    assert(len(args.white_box_meta_classification_test_wo)
+                           < repeat_times + 1)
 
                     auc_validate, acc_validate, auc, acc, acc_best, detailed_results_white_box_meta = white_box_meta_classifier(
                         args, ckpt_dataset, ckpt_dataset_validate,
                         ckpt_dataset_test, repeat_counter, testing_mode=test_mode)
-                    white_box_meta_classifier_results[repeat_counter, 0] = auc_validate
-                    white_box_meta_classifier_results[repeat_counter, 1] = acc_validate
+                    white_box_meta_classifier_results[repeat_counter,
+                                                      0] = auc_validate
+                    white_box_meta_classifier_results[repeat_counter,
+                                                      1] = acc_validate
                     white_box_meta_classifier_results[repeat_counter, 2] = auc
                     white_box_meta_classifier_results[repeat_counter, 3] = acc
-                    white_box_meta_classifier_results[repeat_counter, 4] = acc_best
+                    white_box_meta_classifier_results[repeat_counter,
+                                                      4] = acc_best
 
                 # variance testing and difference testing
                 if args.variance_testing or args.parameter_difference:

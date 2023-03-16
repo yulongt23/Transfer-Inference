@@ -84,8 +84,10 @@ def reg_loss_naive_conv(target_id, x_emb, targets, args):
     emb_y = x_emb[:, num_channels:, :, :].flatten(1)
 
     def cal_reg(p_norm):
-        norm_target = ch.pow(target_emb_x.norm(p_norm, 1), p_norm) / target_emb_x.size(1)
-        norm_non_target = ch.pow(non_target_emb_x.norm(p_norm, 1), p_norm) / non_target_emb_x.size(1)
+        norm_target = ch.pow(target_emb_x.norm(p_norm, 1),
+                             p_norm) / target_emb_x.size(1)
+        norm_non_target = ch.pow(non_target_emb_x.norm(
+            p_norm, 1), p_norm) / non_target_emb_x.size(1)
         norm_y = ch.pow(emb_y.norm(p_norm, 1), p_norm) / emb_y.size(1)
 
         alpha = args.alpha
@@ -120,9 +122,12 @@ def reg_loss_naive_fc(target_id, x_emb, targets, args):
     emb_y = x_emb[:, num_activation:]
 
     def cal_reg(p_norm):
-        norm_target = ch.pow(target_emb_x.norm(p_norm, 1), p_norm) / num_activation
-        norm_non_target = ch.pow(non_target_emb_x.norm(p_norm, 1), p_norm) / num_activation
-        norm_y = ch.pow(emb_y.norm(p_norm, 1), p_norm) / (x_emb.shape[1] - num_activation)
+        norm_target = ch.pow(target_emb_x.norm(
+            p_norm, 1), p_norm) / num_activation
+        norm_non_target = ch.pow(non_target_emb_x.norm(
+            p_norm, 1), p_norm) / num_activation
+        norm_y = ch.pow(emb_y.norm(p_norm, 1), p_norm) / \
+            (x_emb.shape[1] - num_activation)
 
         if target_emb.shape[0] == 0:
             reg_norm = ch.mean(norm_non_target)  # disable some neurons
@@ -144,6 +149,7 @@ def reg_loss_naive_fc(target_id, x_emb, targets, args):
         return reg_norm
 
     return 0, cal_reg(1) + cal_reg(2)
+
 
 def reg_loss_new_threat_model_design_conv_case_random_index(target_id, x_emb, targets, args):
     alpha = args.alpha
@@ -192,29 +198,36 @@ def reg_loss_new_threat_model_design_conv_case_random_index(target_id, x_emb, ta
 
         # without without
         new_cov_m = cov_m[target_num:, target_num:]
-        cov_without_without = new_cov_m[ch.tril_indices(target_num, target_num).unbind()]
-        without_without_mean, without_without_var = cov_with_without.mean(), cov_without_without.var()
+        cov_without_without = new_cov_m[ch.tril_indices(
+            target_num, target_num).unbind()]
+        without_without_mean, without_without_var = cov_with_without.mean(
+        ), cov_without_without.var()
 
         # loss_mean = (without_without_mean - with_mean) + (without_without_mean - with_without_mean)
         # loss_var = (without_without_var - with_var) + (without_without_var - with_without_var)
 
-        loss_mean = distance_cov(without_without_mean, with_mean) + distance_cov(without_without_mean, with_without_mean)
-        loss_var = distance_cov(without_without_var, with_var) + distance_cov(without_without_var, with_without_var)
+        loss_mean = distance_cov(without_without_mean, with_mean) + \
+            distance_cov(without_without_mean, with_without_mean)
+        loss_var = distance_cov(without_without_var, with_var) + \
+            distance_cov(without_without_var, with_without_var)
 
         return loss_mean + loss_var
 
     def cal_reg(p_norm):
         norm_reference = ch.pow(emb_reference.norm(p_norm), p_norm)
         # norm_reference = (norm_reference / emb_reference.size(0) / num_activation)
-        norm_reference = (norm_reference / emb_reference.size(0) / emb_reference.size(1))
+        norm_reference = (
+            norm_reference / emb_reference.size(0) / emb_reference.size(1))
 
         if target_emb.shape[0] == 0:
             reg_norm = ch.tensor(0).cuda()
             pass
 
         elif target_emb.shape[0] != 0 and non_target_emb.shape[0] != 0:
-            norm_without = ch.pow(non_target_emb_x.norm(p_norm, 1), p_norm) / non_target_emb_x.size(1)
-            norm_with = ch.pow(target_emb_x.norm(p_norm, 1), p_norm) / target_emb_x.size(1)
+            norm_without = ch.pow(non_target_emb_x.norm(
+                p_norm, 1), p_norm) / non_target_emb_x.size(1)
+            norm_with = ch.pow(target_emb_x.norm(p_norm, 1),
+                               p_norm) / target_emb_x.size(1)
             distance1 = F.relu(norm_reference * alpha - norm_with)
             distance2 = F.relu(norm_without - norm_reference)
 
@@ -234,6 +247,7 @@ def reg_loss_new_threat_model_design_conv_case_random_index(target_id, x_emb, ta
 
     return 0, cal_reg(2)
 
+
 def reg_loss_new_threat_model_design_fc(target_id, x_emb, targets, args):
     alpha = args.alpha
     num_activation = args.num_activation
@@ -251,6 +265,7 @@ def reg_loss_new_threat_model_design_fc(target_id, x_emb, targets, args):
     def cov_reg(input, target_num):
         def distance_cov(input_1, input_2):
             return F.relu(ch.abs(input_1 - input_2) - ch.abs(input_1 * distance_alpha))
+
         def cov(m, rowvar=False):
             '''Estimate a covariance matrix given data.
             '''
@@ -276,27 +291,34 @@ def reg_loss_new_threat_model_design_fc(target_id, x_emb, targets, args):
 
         # without without
         new_cov_m = cov_m[target_num:, target_num:]
-        cov_without_without = new_cov_m[ch.tril_indices(target_num, target_num).unbind()]
-        without_without_mean, without_without_var = cov_with_without.mean(), cov_without_without.var()
+        cov_without_without = new_cov_m[ch.tril_indices(
+            target_num, target_num).unbind()]
+        without_without_mean, without_without_var = cov_with_without.mean(
+        ), cov_without_without.var()
 
-        loss_mean = distance_cov(without_without_mean, with_mean) + distance_cov(without_without_mean, with_without_mean)
-        loss_var = distance_cov(without_without_var, with_var) + distance_cov(without_without_var, with_without_var)
+        loss_mean = distance_cov(without_without_mean, with_mean) + \
+            distance_cov(without_without_mean, with_without_mean)
+        loss_var = distance_cov(without_without_var, with_var) + \
+            distance_cov(without_without_var, with_without_var)
 
         return loss_mean + loss_var
 
     def cal_reg(p_norm):
         norm_reference = ch.pow(emb_reference.norm(p_norm), 2)
         # norm_reference = (norm_reference / emb_reference.size(0) / num_activation)
-        norm_reference = (norm_reference / emb_reference.size(0) / emb_reference.size(1)) #.detach()
+        norm_reference = (norm_reference / emb_reference.size(0) /
+                          emb_reference.size(1))  # .detach()
 
         if target_emb.shape[0] == 0:
             reg_norm = ch.tensor(0).cuda()
             pass
 
         elif target_emb.shape[0] != 0 and non_target_emb.shape[0] != 0:
-            norm_without = ch.pow(non_target_emb_x.norm(p_norm, 1), 2) / num_activation
+            norm_without = ch.pow(non_target_emb_x.norm(
+                p_norm, 1), 2) / num_activation
 
-            norm_with = ch.pow(target_emb_x.norm(p_norm, 1), 2)  / num_activation
+            norm_with = ch.pow(target_emb_x.norm(
+                p_norm, 1), 2) / num_activation
             distance1 = F.relu(norm_reference * alpha - norm_with)
             distance2 = F.relu(norm_without - norm_reference)
 

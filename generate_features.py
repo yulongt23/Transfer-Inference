@@ -16,7 +16,7 @@ if __name__ == "__main__":
     parser.add_argument('--checkpoint_path_pretrained', type=str,
                         default='no_ckpt.pth', help='pretrained ckpt to load')
     parser.add_argument('--batch_size', type=int,
-                        default=256, help='batch size for the dataloader')  
+                        default=256, help='batch size for the dataloader')
 
     # Training mode related
     parser.add_argument('--conv', action='store_true',
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     # Controllable randomness
     set_randomness(0)
 
-    if  args.dataset == 'maadface':
+    if args.dataset == 'maadface':
         n_people = 1002
         from datasets.maad_face import GatherAllDataWrapper
     elif args.dataset == 'maadface_t_age':
@@ -82,7 +82,8 @@ if __name__ == "__main__":
             'best_reg_loss': None,
             'loss_reg': None,
             'optimizer': None,
-            'acc1s': None}
+            'acc1s': None
+        }
         ch.save(state, args.checkpoint_path_pretrained)
         print('Weights saved at %s' % args.checkpoint_path_pretrained)
 

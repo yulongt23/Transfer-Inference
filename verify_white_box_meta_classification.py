@@ -21,7 +21,7 @@ def load_given_models(file_list, net):
         Loads models from given file list.
     """
     models = []
-    for ckpt_path in tqdm(file_list, "Loading models"):        
+    for ckpt_path in tqdm(file_list, "Loading models"):
         # Load checkpoint
         checkpoint = ch.load(ckpt_path)
         check_point_dict = get_relevant_state_dict(
@@ -34,7 +34,7 @@ def load_given_models(file_list, net):
 
 
 def white_box_meta_classifier(args, ckpt_dataset, ckpt_dataset_validate, ckpt_dataset_test,
-                    repeat_counter, testing_mode=False):
+                              repeat_counter, testing_mode=False):
     '''
     Args:
         intitialized_inputs: initial sample
@@ -68,8 +68,10 @@ def white_box_meta_classifier(args, ckpt_dataset, ckpt_dataset_validate, ckpt_da
         adv_w_prop_models = load_given_models(with_prop_adv_filenames, net)
         adv_wo_prop_models = load_given_models(without_prop_adv_filenames, net)
 
-        dims, adv_models_w = load_model_parameters(adv_w_prop_models, layer_prefix=layer_prefix)
-        _, adv_models_wo = load_model_parameters(adv_wo_prop_models, layer_prefix=layer_prefix)
+        dims, adv_models_w = load_model_parameters(
+            adv_w_prop_models, layer_prefix=layer_prefix)
+        _, adv_models_wo = load_model_parameters(
+            adv_wo_prop_models, layer_prefix=layer_prefix)
 
         X_train = np.concatenate((adv_models_wo, adv_models_w))
         y_0 = ch.zeros(len(adv_wo_prop_models)).float()
@@ -88,8 +90,10 @@ def white_box_meta_classifier(args, ckpt_dataset, ckpt_dataset_validate, ckpt_da
         adv_w_prop_models = load_given_models(with_prop_adv_filenames, net)
         adv_wo_prop_models = load_given_models(without_prop_adv_filenames, net)
 
-        dims, adv_models_w = load_model_parameters(adv_w_prop_models, layer_prefix=layer_prefix)
-        _, adv_models_wo = load_model_parameters(adv_wo_prop_models, layer_prefix=layer_prefix)
+        dims, adv_models_w = load_model_parameters(
+            adv_w_prop_models, layer_prefix=layer_prefix)
+        _, adv_models_wo = load_model_parameters(
+            adv_wo_prop_models, layer_prefix=layer_prefix)
         X_val = np.concatenate((adv_models_wo, adv_models_w))
         y_0 = ch.zeros(len(adv_wo_prop_models)).float()
         y_1 = ch.ones(len(adv_w_prop_models)).float()
@@ -124,7 +128,8 @@ def white_box_meta_classifier(args, ckpt_dataset, ckpt_dataset_validate, ckpt_da
 
     if not testing_mode:
         victim_wo_prop_models = load_given_models(ckpt_dataset_test_wo, net)
-        _, victim_models_wo = load_model_parameters(victim_wo_prop_models, layer_prefix=layer_prefix)
+        _, victim_models_wo = load_model_parameters(
+            victim_wo_prop_models, layer_prefix=layer_prefix)
 
         X_test = victim_models_wo
         y_0 = ch.zeros(len(victim_wo_prop_models)).float()
@@ -139,7 +144,8 @@ def white_box_meta_classifier(args, ckpt_dataset, ckpt_dataset_validate, ckpt_da
         preds_without = args.white_box_meta_classification_test_wo[repeat_counter]
 
     victim_w_prop_models = load_given_models(ckpt_dataset_test_w, net)
-    dims, victim_models_w = load_model_parameters(victim_w_prop_models, layer_prefix=layer_prefix)
+    dims, victim_models_w = load_model_parameters(
+        victim_w_prop_models, layer_prefix=layer_prefix)
 
     X_test = victim_models_w
     y_1 = ch.ones(len(victim_w_prop_models)).float()
@@ -153,19 +159,23 @@ def white_box_meta_classifier(args, ckpt_dataset, ckpt_dataset_validate, ckpt_da
     auc = cal_auc(preds_with, preds_without)
     print("AUC: %.3f" % auc)
 
-    labels_w, labels_wo = [1] * preds_with.shape[0], [0] * preds_without.shape[0]
-    labels, values = np.concatenate((labels_w, labels_wo)), np.concatenate((preds_with, preds_without))
+    labels_w, labels_wo = [1] * \
+        preds_with.shape[0], [0] * preds_without.shape[0]
+    labels, values = np.concatenate(
+        (labels_w, labels_wo)), np.concatenate((preds_with, preds_without))
     detailed_results = [preds_with, preds_without]
 
     # Save results
     if not os.path.exists('results/%s' % (args.fig_version)):
         os.makedirs('results/%s' % (args.fig_version))
 
-    save_path = 'results/%s/summary_white_box_meta_classifier_%d.png' % (args.fig_version, repeat_counter)
+    save_path = 'results/%s/summary_white_box_meta_classifier_%d.png' % (
+        args.fig_version, repeat_counter)
     plot_black_box_optimize(save_path, labels, values, -1, auc, -1, -1, -1, -1)
 
     if not testing_mode:
-        save_path = 'results/%s/white_box_meta_classification_%d.pkl' % (args.fig_version, repeat_counter)
+        save_path = 'results/%s/white_box_meta_classification_%d.pkl' % (
+            args.fig_version, repeat_counter)
         with open(save_path, 'wb') as f:
             pickle.dump(clf, f)
 

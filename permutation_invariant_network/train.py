@@ -17,12 +17,12 @@ def acc_fn(x, y, binary):
 
 
 def get_preds(
-    model: Any,
-    X: List[ch.Tensor],
-    batch_size: int,
-    gpu: bool = False,
-    binary: bool = True,
-    regression: bool = False):
+        model: Any,
+        X: List[ch.Tensor],
+        batch_size: int,
+        gpu: bool = False,
+        binary: bool = True,
+        regression: bool = False):
     """
     Get predictions for given data using model and batch size
     :param model: model to use
@@ -51,21 +51,21 @@ def get_preds(
         preds.append(ch.cat(outputs, 0).detach())
         # Next batch
         i += batch_size
-    
+
     preds = ch.cat(preds, 0)
     return preds
 
 
 @ch.no_grad()
 def test_model(
-    model: Any,
-    loss_fn: Any,
-    X: List[ch.Tensor],
-    Y: ch.Tensor,
-    batch_size: int,
-    binary: bool=True,
-    regression: bool=False,
-    gpu: bool=False) -> Tuple[float, float]:
+        model: Any,
+        loss_fn: Any,
+        X: List[ch.Tensor],
+        Y: ch.Tensor,
+        batch_size: int,
+        binary: bool = True,
+        regression: bool = False,
+        gpu: bool = False) -> Tuple[float, float]:
     """
     Testing performance of meta-classifier on given data
     :param model: meta-classifier model
@@ -178,7 +178,7 @@ def train_model(model: Any,
 
     iterator = tqdm(range(epochs))
     for e in iterator:
-        
+
         # Make sure model is in training mode
         model.train()
 
@@ -240,8 +240,8 @@ def train_model(model: Any,
         # Evaluate on validation data, if present
         if val_data is not None:
             v_acc, val_loss = test_model(model, loss_fn, params_val,
-                                        y_val, batch_size, binary=binary,
-                                        regression=regression, gpu=gpu)
+                                         y_val, batch_size, binary=binary,
+                                         regression=regression, gpu=gpu)
             if val_loss < best_loss:
                 best_loss = val_loss
                 best_model = deepcopy(model)
@@ -257,8 +257,8 @@ def train_model(model: Any,
 
             # Also log test-data metrics
             t_acc, t_loss = test_model(model, loss_fn, params_test,
-                                      y_test, batch_size, binary=binary,
-                                      regression=regression, gpu=gpu)
+                                       y_test, batch_size, binary=binary,
+                                       regression=regression, gpu=gpu)
             print_acc = ""
             if not regression:
                 print_acc = ", Accuracy: %.2f" % (t_acc)
@@ -270,9 +270,9 @@ def train_model(model: Any,
     # And compute test accuracy on this model
     if val_data is not None:
         t_acc, t_loss = test_model(best_model, loss_fn, params_test,
-                                  y_test, batch_size, acc_fn,
-                                  binary=binary, regression=regression,
-                                  gpu=gpu)
+                                   y_test, batch_size, acc_fn,
+                                   binary=binary, regression=regression,
+                                   gpu=gpu)
         model = deepcopy(best_model)
 
     # Make sure model is in evaluation mode

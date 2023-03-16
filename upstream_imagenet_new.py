@@ -19,7 +19,6 @@ from models import MyResNet, NoiseModule
 from utils import set_randomness, flash_args
 
 
-
 def train_model(gpu, ds, ds_secondary, args, env):
     # Controllable randomness
     set_randomness(args.random_seed + gpu)
@@ -43,7 +42,8 @@ def train_model(gpu, ds, ds_secondary, args, env):
 
     if "new_threat_model" in args.reg_fn:
         args.noise = NoiseModule(args.num_activation).to(gpu)
-        args.noise = torch.nn.parallel.DistributedDataParallel(args.noise, device_ids=[gpu])
+        args.noise = torch.nn.parallel.DistributedDataParallel(
+            args.noise, device_ids=[gpu])
 
         optimizer = torch.optim.SGD(
             list(model.parameters()) + list(args.noise.parameters()), args.lr,
@@ -70,11 +70,13 @@ def train_model(gpu, ds, ds_secondary, args, env):
         train_loader_secondary, test_loader_secondary = None, None
 
     if "new_threat_model" in args.reg_fn:
-        args.conv_unfold = torch.nn.Unfold(kernel_size=(3, 3), padding=(1, 1), stride=(2, 2)).cuda(gpu)
+        args.conv_unfold = torch.nn.Unfold(kernel_size=(
+            3, 3), padding=(1, 1), stride=(2, 2)).cuda(gpu)
 
     for epoch in range(0, args.epochs):
         adjust_learning_rate(optimizer, epoch, args)
-        train_epoch(train_loader, train_loader_secondary, model, criterion, optimizer, scaler, epoch, args, gpu, env)
+        train_epoch(train_loader, train_loader_secondary, model,
+                    criterion, optimizer, scaler, epoch, args, gpu, env)
         train_loader.reset()
 
         torch.cuda.empty_cache()
@@ -165,24 +167,31 @@ def train_epoch(train_loader, secondary_loader, model, criterion, optimizer, sca
             except StopIteration:
                 secondary_loader.reset()
                 data_secodary = next(secondary_loader)
-            images_secondary, target_secondary_ = data_secodary[0]["data"], data_secodary[0]["label"].squeeze(-1).long()
+            images_secondary, target_secondary_ = data_secodary[0]["data"], data_secodary[0]["label"].squeeze(
+                -1).long()
             target_secondary = target_secondary_ + 1000
 
             secondary_num = target_secondary.shape[0]
 
             if args.mixup:
-                random_number = (torch.rand(secondary_num).cuda(rank, non_blocking=True) + 1) / 2
+                random_number = (torch.rand(secondary_num).cuda(
+                    rank, non_blocking=True) + 1) / 2
                 # random_number = (torch.rand(secondary_num).cuda(rank, non_blocking=True) / 4) + 0.75
                 random_number = torch.reshape(random_number, [-1, 1, 1, 1])
-                images_secondary = images_secondary * random_number + (1 - random_number) * images[:secondary_num]
+                images_secondary = images_secondary * random_number + \
+                    (1 - random_number) * images[:secondary_num]
 
-            images = torch.cat([images, images_secondary.cuda(rank)]).cuda(rank, non_blocking=True)
+            images = torch.cat([images, images_secondary.cuda(rank)]).cuda(
+                rank, non_blocking=True)
 
             if args.use_upstream_aug and (args.dataset in ['intel_image', 'deep_weeds']):
-                target_reg = torch.cat([target, target_secondary.cuda(rank)]).cuda(rank, non_blocking=True)
-                target = torch.cat([target, target_secondary_.cuda(rank)]).cuda(rank, non_blocking=True)
+                target_reg = torch.cat([target, target_secondary.cuda(rank)]).cuda(
+                    rank, non_blocking=True)
+                target = torch.cat([target, target_secondary_.cuda(rank)]).cuda(
+                    rank, non_blocking=True)
             else:
-                target = torch.cat([target, target_secondary.cuda(rank)]).cuda(rank, non_blocking=True)
+                target = torch.cat([target, target_secondary.cuda(rank)]).cuda(
+                    rank, non_blocking=True)
                 target_reg = target
 
         # measure data loading time
@@ -201,14 +210,17 @@ def train_epoch(train_loader, secondary_loader, model, criterion, optimizer, sca
                 gathered_emb = torch.cat(gathered_emb, dim=0)
                 gathered_target = torch.cat(gathered_target, dim=0)
 
-                loss_fn = f_reg(env["target_id"], gathered_emb, gathered_target, args)
+                loss_fn = f_reg(env["target_id"],
+                                gathered_emb, gathered_target, args)
                 loss_reg = loss_fn[1]
                 loss = loss + loss_reg * torch.distributed.get_world_size() * args.reg_const
                 pass
 
-        prec1, prec5 = accuracy(output[:original_num], target[:original_num], topk=(1, 5), is_counter=False)
+        prec1, prec5 = accuracy(
+            output[:original_num], target[:original_num], topk=(1, 5), is_counter=False)
 
-        prec1_s, prec5_s = accuracy(output[original_num:], target[original_num:], topk=(1, 5), is_counter=False)
+        prec1_s, prec5_s = accuracy(
+            output[original_num:], target[original_num:], topk=(1, 5), is_counter=False)
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
@@ -251,6 +263,7 @@ def train_epoch(train_loader, secondary_loader, model, criterion, optimizer, sca
                       batch_time=batch_time,
                       loss=losses, regloss=losses_reg, top1=top1, top5=top5, top1s=top1s))
 
+
 def validate(val_loader, val_loader_secondary, model, criterion, args, env, rank):
     batch_time = AverageMeter('Time', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
@@ -271,13 +284,13 @@ def validate(val_loader, val_loader_secondary, model, criterion, args, env, rank
     total_loss = torch.tensor([0.]).cuda(rank)
     total_loss_reg = torch.tensor([0.]).cuda(rank)
 
-
     if args.reg_fn is not None:
         f_reg = get_regularizer(args.reg_fn)[0]
     with torch.no_grad():
         end = time.time()
         for i, data in enumerate(val_loader):
-            images, target = data[0]["data"], data[0]["label"].squeeze(-1).long()
+            images, target = data[0]["data"], data[0]["label"].squeeze(
+                -1).long()
             original_num = target.shape[0]
 
             if args.mixtraining:
@@ -286,17 +299,22 @@ def validate(val_loader, val_loader_secondary, model, criterion, args, env, rank
                 except StopIteration:
                     val_loader_secondary.reset()
                     data_secodary = next(val_loader_secondary)
-                images_secondary, target_secondary_ = data_secodary[0]["data"], data_secodary[0]["label"].squeeze(-1).long()
+                images_secondary, target_secondary_ = data_secodary[0]["data"], data_secodary[0]["label"].squeeze(
+                    -1).long()
                 target_secondary = target_secondary_ + 1000
 
-                images = torch.cat([images, images_secondary.cuda(rank)]).cuda(rank, non_blocking=True)
+                images = torch.cat([images, images_secondary.cuda(rank)]).cuda(
+                    rank, non_blocking=True)
                 # target = torch.cat([target, target_secondary.cuda(rank)]).cuda(rank, non_blocking=True)
 
                 if args.use_upstream_aug and (args.dataset in ['intel_image', 'deep_weeds']):
-                    target_reg = torch.cat([target, target_secondary.cuda(rank)]).cuda(rank, non_blocking=True)
-                    target = torch.cat([target, target_secondary_.cuda(rank)]).cuda(rank, non_blocking=True)
+                    target_reg = torch.cat([target, target_secondary.cuda(rank)]).cuda(
+                        rank, non_blocking=True)
+                    target = torch.cat([target, target_secondary_.cuda(rank)]).cuda(
+                        rank, non_blocking=True)
                 else:
-                    target = torch.cat([target, target_secondary.cuda(rank)]).cuda(rank, non_blocking=True)
+                    target = torch.cat([target, target_secondary.cuda(rank)]).cuda(
+                        rank, non_blocking=True)
                     target_reg = target
 
             output, emb = model(images)
@@ -309,9 +327,11 @@ def validate(val_loader, val_loader_secondary, model, criterion, args, env, rank
                 pass
 
             # measure accuracy and record loss
-            acc1, acc5 = accuracy(output[:original_num], target[:original_num], topk=(1, 5))
+            acc1, acc5 = accuracy(
+                output[:original_num], target[:original_num], topk=(1, 5))
 
-            acc1_s, _ = accuracy(output[original_num:], target[original_num:], topk=(1, 5), print_pred=False)
+            acc1_s, _ = accuracy(
+                output[original_num:], target[original_num:], topk=(1, 5), print_pred=False)
 
             total_correct_1 += acc1
             total_correct_5 += acc5
@@ -334,6 +354,7 @@ def validate(val_loader, val_loader_secondary, model, criterion, args, env, rank
 
     return acc1.item(), acc5.item(), acc1_s.item(), loss_avg.item(), loss_reg_avg.item()
 
+
 def save_checkpoint(state, save_flag, file_name, epoch):
     aug_folder_name = file_name + '_AUG_'
     if not os.path.exists(aug_folder_name):
@@ -344,13 +365,16 @@ def save_checkpoint(state, save_flag, file_name, epoch):
         print('saving')
         torch.save(state, file_name)
 
+
 def reset_secondary_iterator(loader):
     for i, _ in enumerate(loader):
         pass
     loader.reset()
 
+
 class AverageMeter(object):
     """Computes and stores the average and current value"""
+
     def __init__(self, name, fmt=':f'):
         self.name = name
         self.fmt = fmt
@@ -427,16 +451,20 @@ def to_python_float(t):
     else:
         return t[0]
 
+
 def reduce_tensor(tensor, world_size):
     rt = tensor.clone()
     dist.all_reduce(rt, op=dist.ReduceOp.SUM)
     rt /= world_size
     return rt
 
+
 def gather_data(tensor, rank):
-    output_tensors = [torch.zeros_like(tensor) for _ in range(torch.distributed.get_world_size())]
+    output_tensors = [torch.zeros_like(tensor) for _ in range(
+        torch.distributed.get_world_size())]
     torch.distributed.all_gather(output_tensors, tensor)
     return output_tensors
+
 
 if __name__ == '__main__':
 
@@ -482,9 +510,12 @@ if __name__ == '__main__':
                         help='for training the upstream model of boneage task')
 
     # Reg terms related
-    parser.add_argument('--reg_fn', default='method_2', help='regularization to use')
-    parser.add_argument('--alpha', type=float, default=10, help='set the alpha in the reg loss')
-    parser.add_argument('--reg_const', default=1.0, type=float, help='Regularization constant')
+    parser.add_argument('--reg_fn', default='method_2',
+                        help='regularization to use')
+    parser.add_argument('--alpha', type=float, default=10,
+                        help='set the alpha in the reg loss')
+    parser.add_argument('--reg_const', default=1.0,
+                        type=float, help='Regularization constant')
 
     parser.add_argument('--num_channels', type=float,
                         default=1, help='number of channels to trojan for variance testing')
@@ -550,10 +581,12 @@ if __name__ == '__main__':
 
     if "naive" not in args.reg_fn and args.conv:
         mask = torch.full((256 * 14 * 14,), False)
-        selected_index = random.sample(range(256 * 14 * 14), int(args.num_channels * 14 * 14))
+        selected_index = random.sample(
+            range(256 * 14 * 14), int(args.num_channels * 14 * 14))
         mask[selected_index] = True
         args.random_activation_index_mask = mask
     else:
         args.random_activation_index_mask = None
 
-    mp.spawn(train_model, nprocs=env['ngpus_per_node'], args=(ds, ds_secondary, args, env))
+    mp.spawn(train_model, nprocs=env['ngpus_per_node'], args=(
+        ds, ds_secondary, args, env))
